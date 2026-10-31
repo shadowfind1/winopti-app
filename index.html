@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>smolen · WinOpti</title>
+<meta name="description" content="Делаю WinOpti — бесплатный оптимизатор Windows для игр, который доказывает прирост FPS замером.">
+<link rel="icon" href="img/logo.png">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@font-face{font-family:Onest;font-weight:400;font-display:swap;src:url(fonts/Onest-400.ttf)}
+@font-face{font-family:Onest;font-weight:500;font-display:swap;src:url(fonts/Onest-500.ttf)}
+@font-face{font-family:Onest;font-weight:600;font-display:swap;src:url(fonts/Onest-600.ttf)}
+@font-face{font-family:Onest;font-weight:700;font-display:swap;src:url(fonts/Onest-700.ttf)}
+@font-face{font-family:Unbounded;font-weight:700;font-display:swap;src:url(fonts/Unbounded-700.ttf)}
+@font-face{font-family:Unbounded;font-weight:800;font-display:swap;src:url(fonts/Unbounded-800.ttf)}
+
+:root{
+  --bg:#f2f4f7; --surface:#fff; --media:#e3e9f2; --ink:#0d1220; --muted:#5b6475;
+  --line:rgba(13,18,32,.1); --accent:#0a8fb0; --accent-ink:#fff; --accent-soft:rgba(10,143,176,.09);
+  --ok:#16a34a; --radius:18px; --gutter:16px; --ease:cubic-bezier(.16,1,.3,1);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#06080F; --surface:#0C111C; --media:#101726; --ink:#EEF3FF; --muted:#8A94A8;
+  --line:rgba(238,243,255,.1); --accent:#3BE8FF; --accent-ink:#06080F; --accent-soft:rgba(59,232,255,.09);
+  --ok:#4ADE80; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Onest,system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit}
+h1,h2,h3,p{margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 var(--gutter)}
+section{padding:64px 0}
+h2{font-size:clamp(28px,7vw,46px);font-weight:700;line-height:1.05;letter-spacing:-.03em;max-width:18ch}
+.lead{color:var(--muted);max-width:52ch;margin-top:14px}
+.num{font-family:Unbounded,Onest,sans-serif;letter-spacing:-.02em}
+svg.i{width:20px;height:20px;flex:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 26px;
+  border-radius:999px;border:1px solid transparent;font:600 16px/1 Onest,sans-serif;text-decoration:none;
+  white-space:nowrap;cursor:pointer;transition:transform .2s var(--ease),background-color .2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
+.btn-ghost:hover{background:var(--surface)}
+.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* hero */
+.hero{padding:32px 0 48px}
+.hero-copy{max-width:720px}
+.hero-name{display:flex;align-items:center;gap:14px;font-weight:600;color:var(--muted)}
+.hero-name img{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--surface)}
+.hero-name small{display:block;font-weight:500;font-size:14px}
+.hero h1{margin-top:18px;font-size:clamp(32px,8.6vw,64px);font-weight:700;line-height:1.02;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;color:var(--accent);white-space:nowrap}
+.hero .lead{font-size:18px;margin-top:18px}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:36px}
+.stat{background:var(--surface);border-radius:var(--radius);padding:18px}
+.stat b{display:block;font-size:26px;font-weight:800;line-height:1.1}
+.stat b em{font-style:normal;color:var(--accent)}
+.stat span{display:block;color:var(--muted);font-size:14px;margin-top:6px}
+
+/* projects */
+.feature{margin-top:36px;background:var(--surface);border-radius:var(--radius);overflow:hidden;display:grid}
+.feature-media{background:var(--media);padding:20px 0 0 20px;overflow:hidden}
+.shots{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-right:20px;scrollbar-width:none}
+.shots::-webkit-scrollbar{display:none}
+.shots button{flex:0 0 86%;scroll-snap-align:start;padding:0;border:0;background:none;cursor:zoom-in}
+.shots img{border-radius:12px 12px 0 0;box-shadow:0 10px 30px rgba(10,20,50,.18);aspect-ratio:1200/780;object-fit:cover;width:100%}
+.feature-body{padding:24px 22px 28px}
+.p-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.p-title h3{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.p-link{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:15px;color:var(--accent);text-decoration:none;white-space:nowrap}
+.p-desc{color:var(--muted);margin-top:10px;max-width:60ch}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.tags span{font-size:13px;font-weight:500;color:var(--muted);padding:5px 11px;border-radius:999px;border:1px solid var(--line)}
+.fps{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin-top:18px;padding:14px 16px;border-radius:14px;background:var(--accent-soft)}
+.fps .from{font-size:20px;font-weight:700;color:var(--muted)}
+.fps .to{font-size:30px;font-weight:800;color:var(--accent)}
+.fps small{color:var(--muted);font-size:13px;flex-basis:100%}
+
+.duo{display:grid;gap:12px;margin-top:12px}
+.duo article{background:var(--surface);border-radius:var(--radius);padding:24px 22px 26px}
+.duo h3{font-size:22px;font-weight:700;letter-spacing:-.02em}
+
+/* priorities: stacked rows */
+.pains{margin-top:32px}
+.pain{display:grid;gap:8px;padding:24px 0;border-top:1px solid var(--line)}
+.pain h3{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2;display:flex;align-items:baseline;gap:12px}
+.pain h3 .num{font-size:14px;color:var(--accent);font-weight:700}
+.pain p{color:var(--muted);max-width:56ch}
+
+/* roadmap: horizontal snap */
+.steps{display:grid;grid-auto-flow:column;grid-auto-columns:78%;gap:12px;margin:32px calc(var(--gutter)*-1) 0;
+  padding:0 var(--gutter) 4px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.step{scroll-snap-align:start;background:var(--surface);border-radius:var(--radius);padding:22px}
+.step .st{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.step.done .st{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.step.now .st{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.step h3{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-top:14px}
+.step p{color:var(--muted);margin-top:8px;font-size:15px}
+
+/* contact */
+.contact{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
+.contact-box{background:var(--accent-soft);border-radius:var(--radius);padding:36px 22px;display:grid;gap:18px;justify-items:start}
+.contact-box h2{max-width:16ch}
+.contact-links{display:flex;flex-wrap:wrap;gap:10px}
+.foot{color:var(--muted);font-size:13px;margin-top:28px}
+
+/* Inside Telegram the native MainButton carries the download CTA */
+.in-tg .hide-tg{display:none}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:20;background:rgba(3,4,8,.94);display:flex;align-items:center;
+  opacity:0;pointer-events:none;transition:opacity .25s var(--ease)}
+.lb.open{opacity:1;pointer-events:auto}
+.lb-in{width:100%;max-height:100%;overflow:auto}
+.lb img{width:100%;max-width:none;margin:0 auto}
+.lb.zoom img{width:220%}
+.lb-hint{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:12px;color:#8A94A8}
+
+@media (min-width:768px){
+  :root{--gutter:32px}
+  section{padding:96px 0}
+  .hero{padding:72px 0 80px}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .feature{grid-template-columns:1.15fr .85fr}
+  .feature-media{padding:32px 0 0 32px;align-self:end}
+  .feature-body{padding:40px 36px;align-self:center}
+  .duo{grid-template-columns:1fr 1fr}
+  .pain{grid-template-columns:.9fr 1.1fr;gap:32px;padding:30px 0}
+  .steps{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);margin:40px 0 0;padding:0;overflow:visible}
+  .contact-box{padding:64px 56px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .hero-copy>*{animation:rise .8s var(--ease) both}
+  .hero-copy>*:nth-child(2){animation-delay:.06s}
+  .hero-copy>*:nth-child(3){animation-delay:.12s}
+  .hero-copy>*:nth-child(4){animation-delay:.18s}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  .reveal.shown{opacity:1;transform:none}
+}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <p class="hero-name"><img src="img/avatar.webp" alt="" width="64" height="64">
+        <span>smolen<small>Автор WinOpti · вайбкодер</small></span></p>
+      <h1>Делаю Windows <em>быстрее для игр</em> и доказываю цифрами</h1>
+      <p class="lead">WinOpti находит реальные проблемы в настройках ПК, исправляет их в один клик и замеряет FPS до и после. Бесплатно и с открытым кодом.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary hide-tg" href="https://github.com/shadowfind1/WinOpti/releases/latest" target="_blank" rel="noopener">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>Скачать WinOpti</a>
+        <a class="btn btn-ghost" href="#work">Проекты</a>
+      </div>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><b class="num"><em>+16%</em></b><span>FPS в CS2 на моём ПК</span></div>
+      <div class="stat"><b class="num">80K</b><span>просмотров на ролике</span></div>
+      <div class="stat"><b class="num">0.45 с</b><span>открывается приложение</span></div>
+      <div class="stat"><b class="num">0 ₽</b><span>без рекламы и подписок</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="work" style="padding-top:24px">
+    <div class="wrap">
+      <h2 class="reveal">Что уже сделал и выпустил</h2>
+
+      <article class="feature reveal">
+        <div class="feature-media">
+          <div class="shots">
+            <button data-src="img/diag.webp" aria-label="Открыть скриншот диагностики"><img src="img/diag.webp" alt="Диагностика: оценка ПК 88 из 100 и что исправить" width="1200" height="780"></button>
+            <button data-src="img/fps.webp" aria-label="Открыть скриншот замера FPS"><img src="img/fps.webp" alt="Замер FPS и разбор, что мешало игре" width="1200" height="780" loading="lazy"></button>
+            <button data-src="img/checks.webp" aria-label="Открыть скриншот проверок"><img src="img/checks.webp" alt="Проверки мыши, пинга и видеокарты" width="1200" height="780" loading="lazy"></button>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="p-title">
+            <h3>WinOpti 2</h3>
+            <a class="p-link" href="https://github.com/shadowfind1/WinOpti" target="_blank" rel="noopener">GitHub ↗</a>
+          </div>
+          <p class="p-desc">Оптимизатор Windows для игр. Диагностика из 14 проверок, 32 твика простым языком с честным минусом, замер FPS «до и после» и разбор, какая программа вызвала фриз. Всё откатывается одной кнопкой.</p>
+          <div class="fps"><span class="from num">240</span><span style="color:var(--muted)">→</span><span class="to num">277 FPS</span>
+            <small>CS2, GTX 1070 Ti · Windows по умолчанию → после WinOpti · 1% low 89 → 109</small></div>
+          <div class="tags"><span>C#</span><span>WPF</span><span>PresentMon</span><span>NVAPI</span><span>RU / EN</span></div>
+        </div>
+      </article>
+
+      <div class="duo">
+        <article class="reveal">
+          <h3>Instagram @winopti</h3>
+          <p class="p-desc">Короткие ролики про FPS и настройки Windows. Ролики про ускорение мыши и очистку диска набрали 70–80 тысяч просмотров.</p>
+          <div class="tags"><a class="p-link" href="https://instagram.com/winopti" target="_blank" rel="noopener">instagram.com/winopti ↗</a></div>
+        </article>
+        <article class="reveal">
+          <h3>WinOpti 1</h3>
+          <p class="p-desc">Первая версия на Python: 32 твика, очистка, автозагрузка и откат. С неё всё началось — отзывы зрителей легли в основу второй версии.</p>
+          <div class="tags"><span>Python</span><span>customtkinter</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="priorities">
+    <div class="wrap">
+      <h2 class="reveal">Мои приоритеты</h2>
+      <div class="pains">
+        <div class="pain reveal">
+          <h3><span class="num">01</span>Без лагов</h3>
+          <p>Оптимизатор не имеет права тормозить сам. Окно открывается за полсекунды, занимает 85 МБ памяти, exe весит около мегабайта.</p>
+        </div>
+        <div class="pain reveal">
+          <h3><span class="num">02</span>Цифры, а не обещания</h3>
+          <p>Никаких «ускорит ПК в 10 раз». Встроенный замер FPS показывает прирост на твоём железе, в твоей игре.</p>
+        </div>
+        <div class="pain reveal">
+          <h3><span class="num">03</span>Честно про минусы</h3>
+          <p>У каждого твика написано, что он делает, пример из жизни и чем за него платишь. Решаешь сам.</p>
+        </div>
+        <div class="pain reveal">
+          <h3><span class="num">04</span>Всё можно вернуть</h3>
+          <p>Журнал каждого изменения, точки восстановления и откат одной кнопкой.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="plan">
+    <div class="wrap">
+      <h2 class="reveal">Что дальше</h2>
+      <div class="steps reveal">
+        <div class="step done"><span class="st">Готово</span><h3>WinOpti 2</h3><p>Новый движок на C#, дизайн «Арена», английский язык и автообновление.</p></div>
+        <div class="step now"><span class="st">Сейчас</span><h3>Сравнение с сообществом</h3><p>Твой FPS против таких же ПК с той же видеокартой.</p></div>
+        <div class="step"><span class="st">Дальше</span><h3>Настройки AMD</h3><p>Anti-Lag и Chill прямо из приложения, как сейчас для NVIDIA.</p></div>
+        <div class="step"><span class="st">Дальше</span><h3>Релиз 2.0</h3><p>Стабильная версия и подписанный exe без предупреждений Windows.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <div class="wrap">
+      <div class="contact-box reveal">
+        <h2>Попробуй на своём ПК</h2>
+        <p class="lead" style="margin-top:0">Скачай, сделай замер до и после и пришли результат — лучшие покажу в роликах.</p>
+        <div class="contact-links">
+          <a class="btn btn-primary hide-tg" href="https://github.com/shadowfind1/WinOpti/releases/latest" target="_blank" rel="noopener">Скачать WinOpti</a>
+          <a class="btn btn-ghost" href="https://instagram.com/winopti" target="_blank" rel="noopener">Instagram</a>
+          <a class="btn btn-ghost" href="https://github.com/shadowfind1/WinOpti" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+      <p class="foot">© 2026 smolen · шрифты Onest и Unbounded (OFL)</p>
+    </div>
+  </section>
+</main>
+
+<div class="lb" id="lb"><div class="lb-in"><img id="lbimg" alt=""></div><div class="lb-hint">Нажми — приблизить · свайп вниз — закрыть</div></div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var tg = window.Telegram && window.Telegram.WebApp;
+    var inTg = !!(tg && tg.initData);
+    var DOWNLOAD_URL = 'https://github.com/shadowfind1/WinOpti/releases/latest';
+
+    function haptic() { try { inTg && tg.HapticFeedback.impactOccurred('light'); } catch (e) {} }
+
+    function applyTheme(scheme) {
+      root.setAttribute('data-theme', scheme === 'light' ? 'light' : 'dark');
+      if (inTg) {
+        var bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+        try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); tg.setBottomBarColor && tg.setBottomBarColor(bg); } catch (e) {}
+      }
+    }
+
+    if (inTg) {
+      root.classList.add('in-tg');
+      tg.ready();
+      tg.expand();
+      applyTheme(tg.colorScheme);
+      var setButton = function () {
+        var css = getComputedStyle(root);
+        tg.MainButton.setParams({ text: 'Скачать WinOpti', color: css.getPropertyValue('--accent').trim(),
+          text_color: css.getPropertyValue('--accent-ink').trim(), is_visible: true });
+      };
+      setButton();
+      tg.onEvent('themeChanged', function () { applyTheme(tg.colorScheme); setButton(); });
+      tg.MainButton.onClick(function () { haptic(); tg.openLink(DOWNLOAD_URL); });
+      document.querySelectorAll('a[target="_blank"]').forEach(function (a) {
+        a.addEventListener('click', function (e) { e.preventDefault(); haptic(); tg.openLink(a.href); });
+      });
+    } else {
+      var mq = window.matchMedia('(prefers-color-scheme: light)');
+      applyTheme(mq.matches ? 'light' : 'dark');
+      mq.addEventListener('change', function (e) { applyTheme(e.matches ? 'light' : 'dark'); });
+    }
+
+    // screenshot lightbox
+    var lb = document.getElementById('lb'), lbimg = document.getElementById('lbimg');
+    function close() { lb.classList.remove('open', 'zoom'); if (inTg) tg.BackButton.hide(); }
+    document.querySelectorAll('.shots button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        haptic(); lbimg.src = b.dataset.src; lb.classList.add('open');
+        if (inTg) tg.BackButton.show();
+      });
+    });
+    lbimg.addEventListener('click', function (e) { e.stopPropagation(); lb.classList.toggle('zoom'); haptic(); });
+    lb.addEventListener('click', close);
+    if (inTg) tg.BackButton.onClick(close);
+    var y0 = null;
+    lb.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; }, { passive: true });
+    lb.addEventListener('touchend', function (e) {
+      if (y0 !== null && e.changedTouches[0].clientY - y0 > 90 && !lb.classList.contains('zoom')) close();
+      y0 = null;
+    });
+
+    var items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('shown'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('shown'); io.unobserve(e.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px' });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+</body>
+</html>
